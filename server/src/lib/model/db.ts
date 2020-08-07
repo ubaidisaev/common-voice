@@ -620,13 +620,16 @@ export default class DB {
             `
               SELECT COUNT(*) as valid
               FROM clips
-              WHERE clips.is_valid AND (
-                SELECT created_at
-                FROM votes
-                WHERE votes.clip_id = clips.id
-                ORDER BY created_at DESC
-                LIMIT 1
-              ) BETWEEN ${from} AND ${to} ${locale ? 'AND locale_id = ?' : ''}
+              WHERE clips.is_valid
+              AND
+                (EXISTS
+                  (SELECT id
+                    FROM votes
+                    WHERE votes.clip_id = clips.id
+                    AND created_at BETWEEN ${from} AND ${to}
+                  )
+                )
+              ${locale ? 'AND locale_id = ?' : ''}
             `,
             [localeId]
           ),
